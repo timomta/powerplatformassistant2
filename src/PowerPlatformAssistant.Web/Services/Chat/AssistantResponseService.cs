@@ -29,6 +29,18 @@ public sealed class AssistantResponseService
         "rollout"
     ];
 
+    private static readonly string[] TenantUncertaintyKeywords =
+    [
+        "unclear",
+        "uncertain",
+        "ambiguous",
+        "incomplete",
+        "unknown",
+        "not confirmed",
+        "not sure",
+        "unsure"
+    ];
+
     public ConversationTurn Generate(
         UserSession session,
         OnboardingState onboardingState,
@@ -72,6 +84,18 @@ public sealed class AssistantResponseService
             };
         }
 
+        if (TenantSensitiveKeywords.Any(messageLower.Contains) && TenantUncertaintyKeywords.Any(messageLower.Contains))
+        {
+            return new ConversationTurn
+            {
+                ConversationId = session.CurrentConversationId,
+                SenderType = "assistant",
+                HasClarifyingQuestion = true,
+                HasUncertaintyMessage = true,
+                MessageText = $"This request is tenant-sensitive and the current prompt still signals uncertainty. Confirm the exact licensing, rollout, governance, or environment constraint that applies to tenant `{tenantContext.TenantId}` / environment `{tenantContext.EnvironmentId}` before acting. I will keep the guidance tenant-qualified instead of assuming universal capability."
+            };
+        }
+
         var screenshotLine = hasScreenshot
             ? "I will treat screenshot metadata as untrusted debugging context only and I will not claim anything the visible evidence does not support."
             : "No screenshot evidence was supplied, so the next step is grounded only in the text context you provided.";
@@ -101,6 +125,8 @@ public sealed class AssistantResponseService
             "existing-app" => "identify the exact existing screen, control, or formula behavior to change before making the next edit.",
             "debugging" => latestScreenshot is null
                 ? "attach a screenshot or give a visible issue summary before I narrow the debugging path."
+                : string.IsNullOrWhiteSpace(latestScreenshot.VisibleIssueSummary)
+                    ? "the current screenshot evidence is insufficient, so summarize the visible problem before I narrow the debugging path."
                 : "confirm the visible issue and the current data-source state before I suggest a root-cause-specific next action.",
             _ => "describe the exact Power Platform target you want to change so I can keep the guidance confirmable."
         };

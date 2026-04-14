@@ -38,7 +38,12 @@ public sealed class UntrustedInputGuard
 
     public void ValidateScreenshotMetadata(string? fileName, string? contentType, long? fileSize)
     {
-        if (string.IsNullOrWhiteSpace(fileName) && string.IsNullOrWhiteSpace(contentType) && fileSize is null)
+        ValidateScreenshotSubmission(fileName, contentType, fileSize, null);
+    }
+
+    public void ValidateScreenshotSubmission(string? fileName, string? contentType, long? fileSize, byte[]? fileContent)
+    {
+        if (string.IsNullOrWhiteSpace(fileName) && string.IsNullOrWhiteSpace(contentType) && fileSize is null && (fileContent is null || fileContent.Length == 0))
         {
             return;
         }
@@ -58,6 +63,22 @@ public sealed class UntrustedInputGuard
         if (fileSize is null || fileSize <= 0 || fileSize > MaxScreenshotBytes)
         {
             errors["screenshotFileSize"] = [$"Screenshot file size must be between 1 byte and {MaxScreenshotBytes} bytes."];
+        }
+
+        if (fileContent is not null)
+        {
+            if (fileContent.Length == 0)
+            {
+                errors["screenshotContent"] = ["Screenshot content must not be empty when a screenshot artifact is uploaded."];
+            }
+            else if (fileContent.Length > MaxScreenshotBytes)
+            {
+                errors["screenshotContent"] = [$"Screenshot content must be {MaxScreenshotBytes} bytes or fewer."];
+            }
+            else if (fileSize is not null && fileContent.Length != fileSize)
+            {
+                errors["screenshotFileSize"] = ["Screenshot file size must match the uploaded artifact size."];
+            }
         }
 
         if (errors.Count > 0)

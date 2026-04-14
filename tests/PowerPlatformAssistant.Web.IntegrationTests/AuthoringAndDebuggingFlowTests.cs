@@ -108,6 +108,7 @@ public class AuthoringAndDebuggingFlowTests(TestApplicationFactory factory) : IC
             ScreenshotFileName = "gallery-issue.png",
             ScreenshotContentType = "image/png",
             ScreenshotFileSize = 4096,
+            ScreenshotContent = Enumerable.Repeat((byte)42, 4096).ToArray(),
             VisibleIssueSummary = "Gallery stays empty after selecting a site",
             DataSourceName = "Site Inspections",
             DataSourceCategory = "Dataverse",
@@ -121,12 +122,14 @@ public class AuthoringAndDebuggingFlowTests(TestApplicationFactory factory) : IC
         Assert.NotNull(debuggingState);
         Assert.Single(debuggingState.Screenshots);
         Assert.Equal("unknown", debuggingState.DataSourceContext?.ResolutionStatus);
+        Assert.True(debuggingState.Screenshots[0].HasStoredArtifact);
+        Assert.NotEmpty(debuggingState.Screenshots[0].Sha256Hash);
 
         var messageResponse = await client.PostAsJsonAsync("/api/chat/messages", new ChatMessageRequest(
             "I need help with a Power Apps debugging path for this gallery.",
-            "gallery-issue.png",
-            "image/png",
-            4096));
+            null,
+            null,
+            null));
 
         Assert.Equal(HttpStatusCode.OK, messageResponse.StatusCode);
         var messageState = await messageResponse.Content.ReadFromJsonAsync<ChatConversationState>();

@@ -16,6 +16,14 @@ public sealed class ScreenshotAttachment
 
     public string StorageReference { get; set; } = string.Empty;
 
+    public bool HasStoredArtifact { get; set; }
+
+    public string Sha256Hash { get; set; } = string.Empty;
+
+    public DateTimeOffset StoredAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public DateTimeOffset? RetentionExpiresAt { get; set; }
+
     public string ReviewStatus { get; set; } = "pending";
 
     public string RejectionReason { get; set; } = string.Empty;
@@ -47,6 +55,8 @@ public sealed class DebuggingContextRequest
     public string ScreenshotContentType { get; set; } = string.Empty;
 
     public long ScreenshotFileSize { get; set; }
+
+    public byte[]? ScreenshotContent { get; set; }
 
     public string VisibleIssueSummary { get; set; } = string.Empty;
 

@@ -71,22 +71,25 @@ public class UnitTest1
     }
 
     [Fact]
-    public void ScreenshotIntakeService_CreatesScopedStorageReference()
+    public async Task ScreenshotIntakeService_CreatesScopedStorageReference()
     {
         var service = new ScreenshotIntakeService();
 
-        var result = service.Create(Guid.Parse("11111111-1111-1111-1111-111111111111"), new Models.DebuggingContextRequest
+        var result = await service.CreateAsync(Guid.Parse("11111111-1111-1111-1111-111111111111"), new Models.DebuggingContextRequest
         {
             ScreenshotFileName = "issue.png",
             ScreenshotContentType = "image/png",
             ScreenshotFileSize = 1024,
+            ScreenshotContent = Enumerable.Repeat((byte)7, 1024).ToArray(),
             VisibleIssueSummary = "Gallery is empty",
             DataSourceName = "Accounts",
             DataSourceCategory = "Dataverse",
             ResolutionStatus = "connected"
         });
 
-        Assert.Contains("debugging/11111111111111111111111111111111", result.ScreenshotAttachment.StorageReference);
+        Assert.Contains("debugging/11111111111111111111111111111111/artifacts", result.ScreenshotAttachment.StorageReference);
         Assert.Equal("connected", result.DataSourceContext.ResolutionStatus);
+        Assert.True(result.ScreenshotAttachment.HasStoredArtifact);
+        Assert.NotEmpty(result.ScreenshotAttachment.Sha256Hash);
     }
 }

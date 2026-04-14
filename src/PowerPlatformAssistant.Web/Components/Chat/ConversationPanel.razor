@@ -1,10 +1,11 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ConversationService ConversationService
 
-<section class="conversation-panel card shadow-sm border-0">
+<section class="conversation-panel card shadow-sm border-0" role="region" aria-labelledby="conversation-shell-heading" aria-describedby="conversation-shell-description">
     <div class="card-body">
-        <h2 class="h4">Secure Chat Shell</h2>
-        <p class="text-muted">All assistant reasoning and session state remain on the server. Messages stay scoped to Microsoft Power Platform guidance.</p>
+        <h2 id="conversation-shell-heading" class="h4">Secure Chat Shell</h2>
+        <p id="conversation-shell-description" class="text-muted">All assistant reasoning and session state remain on the server. Messages stay scoped to Microsoft Power Platform guidance.</p>
+        <div @ref="_statusRegion" class="visually-hidden" role="status" aria-live="polite" tabindex="-1">@_statusText</div>
 
         @if (_state is null)
         {
@@ -43,9 +44,9 @@
             {
                 @if (_state.ActiveChecklist is not null)
                 {
-                    <section class="card border-0 bg-body-tertiary mb-4">
+                    <section class="card border-0 bg-body-tertiary mb-4" role="region" aria-labelledby="active-checklist-heading">
                         <div class="card-body">
-                            <h3 class="h5">@_state.ActiveChecklist.ChecklistTitle</h3>
+                            <h3 id="active-checklist-heading" class="h5">@_state.ActiveChecklist.ChecklistTitle</h3>
                             <ol class="mb-0">
                                 @foreach (var step in _state.ActiveChecklist.Steps.OrderBy(step => step.StepOrder))
                                 {
@@ -79,52 +80,40 @@
                 }
                 else
                 {
-                    foreach (var turn in _state.Turns)
-                    {
-                        if (turn.SenderType == "assistant" || turn.SenderType == "system")
+                    <section class="mb-4" role="log" aria-live="polite" aria-relevant="additions text" aria-label="Conversation history">
+                        @foreach (var turn in _state.Turns)
                         {
-                            <AssistantMessage Turn="turn" />
+                            if (turn.SenderType == "assistant" || turn.SenderType == "system")
+                            {
+                                <AssistantMessage Turn="turn" />
+                            }
+                            else
+                            {
+                                <article class="card border-0 bg-body-tertiary mb-3" aria-labelledby="user-label-@turn.TurnId">
+                                    <div class="card-body">
+                                        <strong id="user-label-@turn.TurnId" class="text-uppercase small text-muted d-block mb-2">User</strong>
+                                        <p class="mb-0">@turn.MessageText</p>
+                                    </div>
+                                </article>
+                            }
                         }
-                        else
-                        {
-                            <article class="card border-0 bg-body-tertiary mb-3">
-                                <div class="card-body">
-                                    <strong class="text-uppercase small text-muted d-block mb-2">User</strong>
-                                    <p class="mb-0">@turn.MessageText</p>
-                                </div>
-                            </article>
-                        }
-                    }
+                    </section>
                 }
 
                 <EditForm Model="_request" FormName="conversation-panel" OnValidSubmit="HandleSubmitAsync">
                     <div class="mb-3">
                         <label class="form-label" for="messageText">Message</label>
-                        <InputTextArea id="messageText" class="form-control" @bind-Value="_request.MessageText" />
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label" for="screenshotName">Screenshot File Name</label>
-                            <InputText id="screenshotName" class="form-control" @bind-Value="_request.ScreenshotFileName" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="screenshotType">Screenshot Content Type</label>
-                            <InputText id="screenshotType" class="form-control" @bind-Value="_request.ScreenshotContentType" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="screenshotSize">Screenshot File Size (bytes)</label>
-                            <InputNumber id="screenshotSize" class="form-control" @bind-Value="_request.ScreenshotFileSize" />
-                        </div>
+                        <InputTextArea id="messageText" class="form-control" @bind-Value="_request.MessageText" aria-describedby="message-help" />
+                        <div id="message-help" class="form-text">Ask for the next Power Platform action, clarification, or debugging step. Screenshot evidence is managed in the dedicated debugging panel.</div>
                     </div>
 
                     @if (!string.IsNullOrWhiteSpace(_errorText))
                     {
-                        <div class="alert alert-danger mt-3" role="alert">@_errorText</div>
+                        <div class="alert alert-danger mt-3" role="alert" aria-live="assertive">@_errorText</div>
                     }
 
                     <div class="d-flex justify-content-between align-items-center mt-4">
-                        <small class="text-muted">Screenshots are optional and treated as untrusted debugging evidence only.</small>
+                        <small class="text-muted">@GetComposerHint()</small>
                         <button class="btn btn-primary" type="submit">Send Guided Question</button>
                     </div>
                 </EditForm>
@@ -137,11 +126,25 @@
     private ChatConversationState? _state;
     private ChatMessageRequest _request = new(string.Empty, null, null, null);
     private string? _errorText;
+    private string _statusText = "Initializing secure conversation state.";
+    private bool _focusStatusRegion;
+    private ElementReference _statusRegion;
 
     protected override async Task OnInitializedAsync()
     {
         var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         _state = await ConversationService.GetStateAsync(authenticationState.User);
+        _statusText = "Server-side conversation state loaded.";
+        _focusStatusRegion = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusStatusRegion)
+        {
+            _focusStatusRegion = false;
+            await _statusRegion.FocusAsync();
+        }
     }
 
     private async Task HandleOnboardingCompletedAsync(CompleteOnboardingRequest request)
@@ -152,10 +155,12 @@
         {
             var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             _state = await ConversationService.CompleteOnboardingAsync(authenticationState.User, request);
+            SetStatus("Onboarding completed. The checklist and guided route are now ready.");
         }
         catch (InputGuardException exception)
         {
             _errorText = string.Join(" ", exception.Errors.SelectMany(pair => pair.Value));
+            SetStatus("Onboarding failed validation.");
         }
     }
 
@@ -168,10 +173,12 @@
             var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             _state = await ConversationService.SubmitMessageAsync(authenticationState.User, _request);
             _request = new ChatMessageRequest(string.Empty, null, null, null);
+            SetStatus("Guided response added to the conversation.");
         }
         catch (InputGuardException exception)
         {
             _errorText = string.Join(" ", exception.Errors.SelectMany(pair => pair.Value));
+            SetStatus("Message submission failed validation.");
         }
     }
 
@@ -183,10 +190,12 @@
         {
             var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             _state = await ConversationService.UpdateAuthoringContextAsync(authenticationState.User, request);
+            SetStatus("Authoring route saved.");
         }
         catch (InputGuardException exception)
         {
             _errorText = string.Join(" ", exception.Errors.SelectMany(pair => pair.Value));
+            SetStatus("Authoring route update failed validation.");
         }
     }
 
@@ -198,10 +207,12 @@
         {
             var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             _state = await ConversationService.UpdateNamingPreferencesAsync(authenticationState.User, request);
+            SetStatus("Naming preferences saved.");
         }
         catch (InputGuardException exception)
         {
             _errorText = string.Join(" ", exception.Errors.SelectMany(pair => pair.Value));
+            SetStatus("Naming preference update failed validation.");
         }
     }
 
@@ -213,10 +224,30 @@
         {
             var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             _state = await ConversationService.UpdateDebuggingContextAsync(authenticationState.User, request);
+            SetStatus("Debugging context saved with the current screenshot evidence.");
         }
         catch (InputGuardException exception)
         {
             _errorText = string.Join(" ", exception.Errors.SelectMany(pair => pair.Value));
+            SetStatus("Debugging context update failed validation.");
         }
+    }
+
+    private string GetComposerHint()
+    {
+        if (_state?.Onboarding?.FlowType == "debugging")
+        {
+            return _state.Screenshots.Count == 0
+                ? "Save a screenshot in the debugging panel before asking for evidence-based debugging guidance."
+                : "The latest saved screenshot remains active debugging evidence for this conversation.";
+        }
+
+        return "Messages remain server-side and scoped to Microsoft Power Platform guidance.";
+    }
+
+    private void SetStatus(string statusText)
+    {
+        _statusText = statusText;
+        _focusStatusRegion = true;
     }
 }

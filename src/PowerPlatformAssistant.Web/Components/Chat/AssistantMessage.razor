@@ -1,26 +1,26 @@
-<article class="assistant-message card border-0 shadow-sm mb-3">
+<article class="assistant-message card border-0 shadow-sm mb-3" aria-labelledby="assistant-label-@Turn.TurnId" aria-describedby="assistant-body-@Turn.TurnId">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
-            <strong class="text-uppercase small text-muted">Assistant</strong>
+            <strong id="assistant-label-@Turn.TurnId" class="text-uppercase small text-muted">Assistant</strong>
             @if (Turn.HasScopeBoundaryMessage)
             {
-                <span class="badge text-bg-warning">Scope Boundary</span>
+                <span class="badge text-bg-warning" role="status">Scope Boundary</span>
             }
             else if (Turn.HasUncertaintyMessage)
             {
-                <span class="badge text-bg-secondary">Uncertainty</span>
+                <span class="badge text-bg-secondary" role="status">Uncertainty</span>
             }
             else if (Turn.HasClarifyingQuestion)
             {
-                <span class="badge text-bg-info">Clarifying Question</span>
+                <span class="badge text-bg-info" role="status">Clarifying Question</span>
             }
             else if (Turn.HasChecklistOutput)
             {
-                <span class="badge text-bg-success">Next Step</span>
+                <span class="badge text-bg-success" role="status">Next Step</span>
             }
         </div>
 
-        <div class="mb-0" style="white-space: pre-line">@Turn.MessageText</div>
+        <div id="assistant-body-@Turn.TurnId" class="mb-0" style="white-space: pre-line">@Turn.MessageText</div>
     </div>
 </article>
 

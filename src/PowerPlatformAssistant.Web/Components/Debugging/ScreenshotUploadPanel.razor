@@ -1,27 +1,20 @@
-<section class="card border-0 bg-body-tertiary mb-4">
+<section class="card border-0 bg-body-tertiary mb-4" role="region" aria-labelledby="debugging-context-heading" aria-describedby="debugging-context-description">
     <div class="card-body">
-        <h3 class="h5">Screenshot Debugging Context</h3>
-        <p class="text-muted mb-3">Attach screenshot metadata and data-source notes so debugging guidance stays tied to visible evidence instead of guesses.</p>
+        <h3 id="debugging-context-heading" class="h5">Screenshot Debugging Context</h3>
+        <p id="debugging-context-description" class="text-muted mb-3">Upload the screenshot artifact on the server, then record the visible issue and data-source notes so debugging guidance stays tied to evidence instead of guesses.</p>
 
         <EditForm Model="_request" FormName="debugging-context" OnValidSubmit="HandleSubmitAsync">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label" for="debugFileName">Screenshot File Name</label>
-                    <InputText id="debugFileName" class="form-control" @bind-Value="_request.ScreenshotFileName" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="debugContentType">Content Type</label>
-                    <InputText id="debugContentType" class="form-control" @bind-Value="_request.ScreenshotContentType" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="debugFileSize">File Size (bytes)</label>
-                    <InputNumber id="debugFileSize" class="form-control" @bind-Value="_request.ScreenshotFileSize" />
-                </div>
-            </div>
+            <fieldset class="border-0 p-0 m-0" aria-describedby="debug-upload-help">
+                <legend class="form-label fs-6">Screenshot Artifact</legend>
+                <p id="debug-upload-help" class="text-muted small">The file is uploaded to server-side storage and treated as sensitive troubleshooting input. PNG, JPEG, and WebP are supported.</p>
+                <InputFile id="debugFileInput" OnChange="HandleFileSelectedAsync" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" class="form-control" aria-describedby="debug-upload-status" />
+                <div id="debug-upload-status" class="form-text" aria-live="polite">@_uploadStatusText</div>
+            </fieldset>
 
             <div class="mt-3">
                 <label class="form-label" for="issueSummary">Visible Issue Summary</label>
-                <InputTextArea id="issueSummary" class="form-control" @bind-Value="_request.VisibleIssueSummary" />
+                <InputTextArea id="issueSummary" class="form-control" @bind-Value="_request.VisibleIssueSummary" aria-describedby="issue-summary-help" />
+                <div id="issue-summary-help" class="form-text">State only what is visibly wrong or missing in the screenshot.</div>
             </div>
 
             <div class="row g-3 mt-1">
@@ -58,6 +51,7 @@
 </section>
 
 @code {
+    private string _uploadStatusText = "No screenshot artifact selected yet.";
     private readonly DebuggingContextRequest _request = new() { ResolutionStatus = "unknown" };
 
     [Parameter]
@@ -72,6 +66,29 @@
         _request.DataSourceCategory = DataSourceContext?.DataSourceCategory ?? string.Empty;
         _request.ResolutionStatus = DataSourceContext?.ResolutionStatus ?? "unknown";
         _request.ClarificationNotes = DataSourceContext?.ClarificationNotes ?? string.Empty;
+    }
+
+    private async Task HandleFileSelectedAsync(InputFileChangeEventArgs eventArgs)
+    {
+        var browserFile = eventArgs.File;
+
+        try
+        {
+            await using var fileStream = browserFile.OpenReadStream(UntrustedInputGuard.MaxScreenshotBytes);
+            using var memoryStream = new MemoryStream();
+            await fileStream.CopyToAsync(memoryStream);
+
+            _request.ScreenshotContent = memoryStream.ToArray();
+            _request.ScreenshotFileName = browserFile.Name;
+            _request.ScreenshotContentType = browserFile.ContentType;
+            _request.ScreenshotFileSize = browserFile.Size;
+            _uploadStatusText = $"{browserFile.Name} selected for secure server-side upload ({browserFile.Size} bytes).";
+        }
+        catch (Exception exception)
+        {
+            _request.ScreenshotContent = null;
+            _uploadStatusText = $"Screenshot selection failed: {exception.Message}";
+        }
     }
 
     private Task HandleSubmitAsync()

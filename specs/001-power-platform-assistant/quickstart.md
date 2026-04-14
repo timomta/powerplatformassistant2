@@ -21,6 +21,7 @@ This document defines the primary end-to-end validation flows for the Power Plat
 
 - The solution builds without warnings promoted to errors.
 - The automated suite passes before manual scenario review starts.
+- Current evidence: `dotnet test PowerPlatformAssistant.sln` passed 17 of 17 tests on 2026-04-14.
 
 ## Scenario 1: First-Session Onboarding
 
@@ -95,6 +96,7 @@ This document defines the primary end-to-end validation flows for the Power Plat
 - The assistant explicitly states when the screenshot is insufficient for certainty.
 - Screenshot handling remains limited to debugging context.
 - Saved screenshot metadata and data-source context persist across state reload.
+- When a screenshot artifact is uploaded, the artifact is stored server-side with a storage reference and integrity hash rather than remaining metadata-only.
 
 ## Scenario 6: Data-Source Clarification
 
@@ -187,3 +189,37 @@ Use the following method for the measurable acceptance review tied to SC-003, SC
 
 - Automated coverage now verifies onboarding persistence, guided messaging, route switching, naming preference persistence, and screenshot debugging context persistence.
 - Manual acceptance review should still use the fixed-sample method below for SC-003, SC-004, and SC-005 because those criteria require human judgment against the constitution boundary.
+
+## Constitution Compliance Evidence
+
+- Server-side execution: assistant state, prompt composition, conversation orchestration, and screenshot artifact handling remain on the server.
+- Sensitive input handling: chat input and screenshot submissions are validated; screenshot artifacts are stored server-side with integrity hashes and remain bounded to debugging scope.
+- Scope and grounding: out-of-scope prompts are rejected, tenant-sensitive uncertainty produces clarifying guidance, and screenshot ambiguity yields explicit insufficiency messaging.
+- Accessibility: onboarding, authoring, debugging, and conversation regions now expose clearer labels, live status updates, and safer focus movement after state changes.
+
+## Performance Evidence
+
+Validation run date: 2026-04-14
+
+- Onboarding completion latency: 13.90 ms measured by `PerformanceEvidenceTests.OnboardingCompletion_StaysWithinLatencyBudget`.
+- First assistant response latency: 144.19 ms measured by `PerformanceEvidenceTests.FirstAssistantResponse_StaysWithinLatencyBudget`.
+
+## Automated Acceptance Rehearsal
+
+Validation run date: 2026-04-14
+
+| Criterion | Sample | Pass Count | Fail Count | Computed Percentage | Result | Evidence Source |
+|-----------|--------|------------|------------|---------------------|--------|-----------------|
+| SC-003 | 10 automated scope-boundary prompts | 10 | 0 | 100% | Pass | `AcceptanceEvidenceTests.ScopeBoundary_RehearsalMeetsSc003Threshold` |
+| SC-004 | 10 automated tenant-sensitive prompts | 10 | 0 | 100% | Pass | `AcceptanceEvidenceTests.TenantAwareGuidance_RehearsalMeetsSc004Threshold` |
+| SC-005 | 10 automated screenshot-debugging sessions | 10 | 0 | 100% | Pass | `AcceptanceEvidenceTests.ScreenshotDebugging_RehearsalMeetsSc005Threshold` |
+
+## Acceptance Path Validation
+
+Validation run date: 2026-04-14
+
+1. `dotnet build PowerPlatformAssistant.sln` and `dotnet test PowerPlatformAssistant.sln` completed successfully.
+2. Automated acceptance rehearsal passed SC-003, SC-004, and SC-005 at 10/10 each.
+3. Remaining follow-up issues before production acceptance:
+   - official manual reviewer sign-off under the organizational policy authority is still pending
+   - `ChatRetentionDays` and `ScreenshotRetentionDays` remain unset in configuration and must be populated with policy-approved values before production release

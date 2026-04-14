@@ -26,7 +26,13 @@
                             <span class="badge text-bg-light">@screenshot.ReviewStatus</span>
                         </div>
                         <p class="mb-2">@(!string.IsNullOrWhiteSpace(screenshot.VisibleIssueSummary) ? screenshot.VisibleIssueSummary : "Visible issue summary still pending.")</p>
-                        <p class="mb-0 text-muted small">Storage reference: @screenshot.StorageReference</p>
+                        <p class="mb-1 text-muted small">Storage reference: @screenshot.StorageReference</p>
+                        <p class="mb-1 text-muted small">Stored artifact: @(screenshot.HasStoredArtifact ? "yes" : "metadata only")</p>
+                        @if (screenshot.HasStoredArtifact)
+                        {
+                            <p class="mb-1 text-muted small">SHA-256: @screenshot.Sha256Hash</p>
+                        }
+                        <p class="mb-0 text-muted small">Retention: @(screenshot.RetentionExpiresAt is null ? "pending policy configuration" : screenshot.RetentionExpiresAt.Value.ToString("yyyy-MM-dd"))</p>
                     </div>
                 </article>
             }

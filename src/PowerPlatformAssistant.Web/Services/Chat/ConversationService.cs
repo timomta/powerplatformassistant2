@@ -175,8 +175,8 @@ public sealed class ConversationService(
         var context = await GetOrCreateContextAsync(user, cancellationToken);
         EnsureOnboardingComplete(context);
 
-        inputGuard.ValidateScreenshotMetadata(request.ScreenshotFileName, request.ScreenshotContentType, request.ScreenshotFileSize);
-        var intakeResult = screenshotIntakeService.Create(context.Conversation.ConversationId, request);
+        inputGuard.ValidateScreenshotSubmission(request.ScreenshotFileName, request.ScreenshotContentType, request.ScreenshotFileSize, request.ScreenshotContent);
+        var intakeResult = await screenshotIntakeService.CreateAsync(context.Conversation.ConversationId, request, cancellationToken);
 
         dbContext.ScreenshotAttachments.Add(intakeResult.ScreenshotAttachment);
 
@@ -243,7 +243,7 @@ public sealed class ConversationService(
             promptComposition,
             context.ActiveChecklist,
             guardedMessage.MessageText,
-            request.HasScreenshot(),
+            request.HasScreenshot() || context.Screenshots.Count > 0,
             refreshResult,
             context.AppContext,
             context.EnvironmentContext,

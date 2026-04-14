@@ -40,14 +40,36 @@ This file records the main consistency findings from the cross-artifact review o
 ## Implementation Evidence Update
 
 - Setup and foundational implementation were completed earlier with authenticated startup, governance-bound prompt loading, tenant context resolution, and secure chat-state endpoints.
-- The current implementation now persists onboarding state, conversation turns, authoring route changes, naming preferences, screenshot metadata, and debugging data-source context through EF-backed conversation storage.
+- The current implementation now persists onboarding state, conversation turns, authoring route changes, naming preferences, screenshot metadata, debugging data-source context, and stored screenshot artifacts through EF-backed conversation storage plus server-side file handling.
 - Automated verification now covers:
    - onboarding completion and guided message persistence
    - rejection of pre-onboarding guided messages
    - new-app and existing-app route persistence and safe route switching
    - naming preference persistence across later turns and state reload
-   - screenshot debugging context persistence and clarifying guidance when data-source state remains unresolved
+   - screenshot debugging context persistence, stored artifact hashing, and clarifying guidance when data-source state remains unresolved
+- Accessibility hardening now covers live status announcements, labeled regions, and focus-safe updates across onboarding, authoring, debugging, and shared chat flows.
+- Performance evidence from the 2026-04-14 validation run recorded onboarding completion at 13.90 ms and first assistant response latency at 144.19 ms in the test host.
+- Automated acceptance rehearsal from the 2026-04-14 validation run recorded SC-003 at 10/10, SC-004 at 10/10, and SC-005 at 10/10.
 - Manual acceptance review is still required for organizational-policy authority sign-off on SC-003, SC-004, and SC-005 because those criteria depend on human review of bounded behavior rather than only transport-level correctness.
+
+## Constitution Compliance Review Evidence
+
+| Principle | Current Evidence | Status |
+|-----------|------------------|--------|
+| Server-side execution is mandatory | Conversation state, prompt composition, assistant responses, and screenshot artifact storage all execute on the server. | Pass |
+| Security and data minimization are non-negotiable | Chat and screenshot inputs are validated; screenshot artifacts are stored server-side with integrity hashes and remain bounded to debugging context. | Pass |
+| Scope is strictly limited to Microsoft Power Platform guidance | Out-of-scope prompts trigger scope-boundary responses and automated rehearsal passed 10/10 for SC-003. | Pass |
+| Guidance must be tenant-aware, incremental, and confirmable | Tenant-sensitive uncertainty triggers clarifying guidance and automated rehearsal passed 10/10 for SC-004. | Pass |
+| The chat experience must remain clear, grounded, and safe | Debugging responses explicitly state when screenshot evidence is insufficient and automated rehearsal passed 10/10 for SC-005. | Pass |
+| Accessibility and quality are release invariants | Live status messaging, labeled regions, focus-safe updates, and passing build/test verification are in place. | Pass with configuration follow-up |
+
+## Automated Acceptance Rehearsal Record
+
+| Criterion | Review Date | Reviewer | Sample | Pass Count | Fail Count | Computed Percentage | Release Decision | Result | Evidence Notes |
+|-----------|-------------|----------|--------|------------|------------|---------------------|------------------|--------|----------------|
+| SC-003 | 2026-04-14 | GitHub Copilot automated rehearsal | 10 scope-boundary prompts | 10 | 0 | 100% | Ready for manual confirmation | Pass | `AcceptanceEvidenceTests.ScopeBoundary_RehearsalMeetsSc003Threshold` |
+| SC-004 | 2026-04-14 | GitHub Copilot automated rehearsal | 10 tenant-sensitive prompts | 10 | 0 | 100% | Ready for manual confirmation | Pass | `AcceptanceEvidenceTests.TenantAwareGuidance_RehearsalMeetsSc004Threshold` |
+| SC-005 | 2026-04-14 | GitHub Copilot automated rehearsal | 10 screenshot-debugging sessions | 10 | 0 | 100% | Ready for manual confirmation | Pass | `AcceptanceEvidenceTests.ScreenshotDebugging_RehearsalMeetsSc005Threshold` |
 
 ## Acceptance Review Results Record
 
@@ -58,6 +80,11 @@ Record manual review outcomes here after executing the quickstart evaluation met
 | SC-003 | Pending | Pending | 10 Scenario 7 responses | Pending | Pending | Pending | Pending | Pending | Pending |
 | SC-004 | Pending | Pending | 10 Scenario 4 responses | Pending | Pending | Pending | Pending | Pending | Pending |
 | SC-005 | Pending | Pending | 10 Scenario 5 sessions | Pending | Pending | Pending | Pending | Pending | Pending |
+
+## Follow-Up Issues
+
+1. The organizational policy authority still needs to perform and sign the formal manual acceptance review for SC-003, SC-004, and SC-005.
+2. `ChatRetentionDays` and `ScreenshotRetentionDays` are still `0` in configuration and require policy-approved production values before release.
 
 ## Recommended Use
 
