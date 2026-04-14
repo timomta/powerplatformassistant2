@@ -1,0 +1,59 @@
+<section class="card border-0 bg-body-tertiary mb-4">
+    <div class="card-body">
+        <h3 class="h5">Naming Preferences</h3>
+        <p class="text-muted mb-3">Persist the names you want the assistant to preserve across formulas, controls, and future steps.</p>
+
+        <EditForm Model="_request" FormName="naming-preferences" OnValidSubmit="HandleSubmitAsync">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="preferredAppName">Preferred App Name</label>
+                    <InputText id="preferredAppName" class="form-control" @bind-Value="_request.AppName" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="preferredScreenName">Preferred Screen Name</label>
+                    <InputText id="preferredScreenName" class="form-control" @bind-Value="_request.ScreenName" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="preferredControlName">Preferred Control Name</label>
+                    <InputText id="preferredControlName" class="form-control" @bind-Value="_request.ControlName" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="preferredVariableName">Preferred Variable Name</label>
+                    <InputText id="preferredVariableName" class="form-control" @bind-Value="_request.VariableName" />
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <small class="text-muted" aria-live="polite">Saved preferences: @SummaryText</small>
+                <button type="submit" class="btn btn-outline-primary">Save Naming Preferences</button>
+            </div>
+        </EditForm>
+    </div>
+</section>
+
+@code {
+    private readonly NamingPreferenceUpdateRequest _request = new();
+
+    [Parameter]
+    public IReadOnlyList<NamingPreference> NamingPreferences { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public EventCallback<NamingPreferenceUpdateRequest> OnSaved { get; set; }
+
+    private string SummaryText => NamingPreferences.Count == 0
+        ? "none"
+        : string.Join(", ", NamingPreferences.Select(preference => $"{preference.ArtifactType}={preference.PreferredName}"));
+
+    protected override void OnParametersSet()
+    {
+        _request.AppName = NamingPreferences.FirstOrDefault(preference => preference.ArtifactType == "app")?.PreferredName ?? string.Empty;
+        _request.ScreenName = NamingPreferences.FirstOrDefault(preference => preference.ArtifactType == "screen")?.PreferredName ?? string.Empty;
+        _request.ControlName = NamingPreferences.FirstOrDefault(preference => preference.ArtifactType == "control")?.PreferredName ?? string.Empty;
+        _request.VariableName = NamingPreferences.FirstOrDefault(preference => preference.ArtifactType == "variable")?.PreferredName ?? string.Empty;
+    }
+
+    private Task HandleSubmitAsync()
+    {
+        return OnSaved.InvokeAsync(_request);
+    }
+}

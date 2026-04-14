@@ -1,6 +1,7 @@
 using PowerPlatformAssistant.Web.Models;
 using PowerPlatformAssistant.Web.Prompts;
 using PowerPlatformAssistant.Web.Services.Tenant;
+using AppContextModel = PowerPlatformAssistant.Web.Models.AppContext;
 
 namespace PowerPlatformAssistant.Web.Services.Chat;
 
@@ -36,7 +37,14 @@ public sealed class AssistantResponseService
         GuidanceChecklist? checklist,
         string messageText,
         bool hasScreenshot,
-        TenantContextRefreshResult refreshResult)
+        TenantContextRefreshResult refreshResult,
+        AppContextModel? appContext,
+        EnvironmentContext? environmentContext,
+        IReadOnlyList<NamingPreference> namingPreferences,
+        ScreenshotAttachment? latestScreenshot,
+        DataSourceContext? dataSourceContext,
+        string authoringContextLine,
+        string debuggingContextLine)
     {
         var normalizedMessage = messageText.Trim();
         var messageLower = normalizedMessage.ToLowerInvariant();
@@ -81,13 +89,30 @@ public sealed class AssistantResponseService
             _ => "Advanced path: treat the next action as a bounded hypothesis against the current tenant context."
         };
 
+        var routeLabel = appContext?.FlowType ?? onboardingState.FlowType;
+        var namingLine = namingPreferences.Count == 0
+            ? "No naming preferences are currently pinned."
+            : $"Pinned names: {string.Join(", ", namingPreferences.Select(preference => $"{preference.ArtifactType}={preference.PreferredName}"))}.";
+        var unresolvedDebugging = routeLabel == "debugging" && dataSourceContext is not null && dataSourceContext.ResolutionStatus is "unknown" or "planned";
+        var capabilityUncertainty = routeLabel == "new-app" && environmentContext?.HasCreationCapabilityUncertainty == true;
+        var routeSpecificNextStep = routeLabel switch
+        {
+            "new-app" => "confirm the starter pattern, target screen structure, and first data dependency before creating additional surfaces.",
+            "existing-app" => "identify the exact existing screen, control, or formula behavior to change before making the next edit.",
+            "debugging" => latestScreenshot is null
+                ? "attach a screenshot or give a visible issue summary before I narrow the debugging path."
+                : "confirm the visible issue and the current data-source state before I suggest a root-cause-specific next action.",
+            _ => "describe the exact Power Platform target you want to change so I can keep the guidance confirmable."
+        };
+
         return new ConversationTurn
         {
             ConversationId = session.CurrentConversationId,
             SenderType = "assistant",
             HasChecklistOutput = checklist is not null,
-            HasUncertaintyMessage = refreshResult.RequiresClarification,
-            MessageText = $"{responsePrefix}{Environment.NewLine}{refreshLine}{Environment.NewLine}Current route: {onboardingState.FlowType}. App context: {SafeValue(onboardingState.AppContext)}.{Environment.NewLine}Tenant `{tenantContext.TenantId}` / environment `{tenantContext.EnvironmentId}` remain the active guidance boundary.{Environment.NewLine}{screenshotLine}{Environment.NewLine}Next step: describe the exact screen, control, or authoring goal you want to change so I can keep the guidance confirmable.{Environment.NewLine}{(string.IsNullOrWhiteSpace(checklistLines) ? string.Empty : $"Checklist:{Environment.NewLine}{checklistLines}{Environment.NewLine}")}Prompt artifacts loaded server-side ({promptComposition.CombinedPrompt.Length} characters)."
+            HasClarifyingQuestion = unresolvedDebugging || capabilityUncertainty,
+            HasUncertaintyMessage = refreshResult.RequiresClarification || unresolvedDebugging || capabilityUncertainty,
+            MessageText = $"{responsePrefix}{Environment.NewLine}{refreshLine}{Environment.NewLine}Current route: {routeLabel}. App context: {SafeValue(onboardingState.AppContext)}.{Environment.NewLine}{authoringContextLine}{Environment.NewLine}{debuggingContextLine}{Environment.NewLine}{namingLine}{Environment.NewLine}Tenant `{tenantContext.TenantId}` / environment `{tenantContext.EnvironmentId}` remain the active guidance boundary.{Environment.NewLine}{screenshotLine}{Environment.NewLine}Next step: {routeSpecificNextStep}{Environment.NewLine}{(string.IsNullOrWhiteSpace(checklistLines) ? string.Empty : $"Checklist:{Environment.NewLine}{checklistLines}{Environment.NewLine}")}Prompt artifacts loaded server-side ({promptComposition.CombinedPrompt.Length} characters)."
         };
     }
 

@@ -1,0 +1,54 @@
+<section class="card border-0 bg-body-tertiary mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h3 class="h5 mb-1">Screenshot Review</h3>
+                <p class="text-muted mb-0">Only visible evidence is treated as valid debugging context.</p>
+            </div>
+            <span class="badge text-bg-secondary">@Screenshots.Count saved</span>
+        </div>
+
+        @if (Screenshots.Count == 0)
+        {
+            <div class="alert alert-secondary mb-0" role="status">No screenshot metadata has been recorded yet.</div>
+        }
+        else
+        {
+            foreach (var screenshot in Screenshots)
+            {
+                <article class="card border-0 shadow-sm mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                            <div>
+                                <strong class="d-block">@screenshot.OriginalFileName</strong>
+                                <span class="text-muted small">@screenshot.ContentType · @screenshot.FileSize bytes</span>
+                            </div>
+                            <span class="badge text-bg-light">@screenshot.ReviewStatus</span>
+                        </div>
+                        <p class="mb-2">@(!string.IsNullOrWhiteSpace(screenshot.VisibleIssueSummary) ? screenshot.VisibleIssueSummary : "Visible issue summary still pending.")</p>
+                        <p class="mb-0 text-muted small">Storage reference: @screenshot.StorageReference</p>
+                    </div>
+                </article>
+            }
+        }
+
+        @if (DataSourceContext is not null)
+        {
+            <div class="border-top pt-3 mt-3">
+                <h4 class="h6 text-uppercase text-muted">Data Source Context</h4>
+                <p class="mb-1"><strong>Name:</strong> @DataSourceContext.DataSourceName</p>
+                <p class="mb-1"><strong>Category:</strong> @DataSourceContext.DataSourceCategory</p>
+                <p class="mb-1"><strong>Status:</strong> @DataSourceContext.ResolutionStatus</p>
+                <p class="mb-0"><strong>Notes:</strong> @(string.IsNullOrWhiteSpace(DataSourceContext.ClarificationNotes) ? "none" : DataSourceContext.ClarificationNotes)</p>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<ScreenshotAttachment> Screenshots { get; set; } = [];
+
+    [Parameter]
+    public DataSourceContext? DataSourceContext { get; set; }
+}

@@ -11,6 +11,8 @@ using PowerPlatformAssistant.Web.Prompts;
 using PowerPlatformAssistant.Web.Security;
 using PowerPlatformAssistant.Web.Services.Chat;
 using PowerPlatformAssistant.Web.Services.Guidance;
+using PowerPlatformAssistant.Web.Services.Naming;
+using PowerPlatformAssistant.Web.Services.Screenshots;
 using PowerPlatformAssistant.Web.Services.Tenant;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -70,6 +72,11 @@ builder.Services.AddScoped<TenantContextRefreshService>();
 builder.Services.AddScoped<PromptCompositionService>();
 builder.Services.AddScoped<UntrustedInputGuard>();
 builder.Services.AddScoped<OnboardingService>();
+builder.Services.AddScoped<AuthoringFlowService>();
+builder.Services.AddScoped<AppRouteTransitionService>();
+builder.Services.AddScoped<NamingPreferenceService>();
+builder.Services.AddScoped<ScreenshotIntakeService>();
+builder.Services.AddScoped<DebuggingGuidanceService>();
 builder.Services.AddScoped<AssistantResponseService>();
 builder.Services.AddScoped<ConversationService>();
 
@@ -151,6 +158,78 @@ app.MapPost("/api/chat/messages",
         try
         {
             var response = await conversationService.SubmitMessageAsync(user, request, cancellationToken);
+            return TypedResults.Ok(response);
+        }
+        catch (InputGuardException exception)
+        {
+            return TypedResults.ValidationProblem(exception.ToDictionary());
+        }
+    })
+    .RequireAuthorization();
+
+app.MapPost("/api/chat/authoring-context",
+    async Task<Results<Ok<ChatConversationState>, ValidationProblem, UnauthorizedHttpResult>> (
+        ClaimsPrincipal user,
+        AuthoringContextRequest request,
+        ConversationService conversationService,
+        CancellationToken cancellationToken) =>
+    {
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        try
+        {
+            var response = await conversationService.UpdateAuthoringContextAsync(user, request, cancellationToken);
+            return TypedResults.Ok(response);
+        }
+        catch (InputGuardException exception)
+        {
+            return TypedResults.ValidationProblem(exception.ToDictionary());
+        }
+    })
+    .RequireAuthorization();
+
+app.MapPost("/api/chat/naming-preferences",
+    async Task<Results<Ok<ChatConversationState>, ValidationProblem, UnauthorizedHttpResult>> (
+        ClaimsPrincipal user,
+        NamingPreferenceUpdateRequest request,
+        ConversationService conversationService,
+        CancellationToken cancellationToken) =>
+    {
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        try
+        {
+            var response = await conversationService.UpdateNamingPreferencesAsync(user, request, cancellationToken);
+            return TypedResults.Ok(response);
+        }
+        catch (InputGuardException exception)
+        {
+            return TypedResults.ValidationProblem(exception.ToDictionary());
+        }
+    })
+    .RequireAuthorization();
+
+app.MapPost("/api/chat/debugging-context",
+    async Task<Results<Ok<ChatConversationState>, ValidationProblem, UnauthorizedHttpResult>> (
+        ClaimsPrincipal user,
+        DebuggingContextRequest request,
+        ConversationService conversationService,
+        CancellationToken cancellationToken) =>
+    {
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        try
+        {
+            var response = await conversationService.UpdateDebuggingContextAsync(user, request, cancellationToken);
             return TypedResults.Ok(response);
         }
         catch (InputGuardException exception)

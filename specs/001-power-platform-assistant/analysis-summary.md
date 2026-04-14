@@ -37,6 +37,18 @@ This file records the main consistency findings from the cross-artifact review o
 - Consistency rerun result: no remaining high-signal cross-artifact conflicts were identified across spec.md, plan.md, data-model.md, quickstart.md, tasks.md, and this analysis summary after the documentation updates.
 - Remaining implementation dependencies: organization-defined access-control, retention, disposal, and compliance rules still require formal policy decisions during implementation.
 
+## Implementation Evidence Update
+
+- Setup and foundational implementation were completed earlier with authenticated startup, governance-bound prompt loading, tenant context resolution, and secure chat-state endpoints.
+- The current implementation now persists onboarding state, conversation turns, authoring route changes, naming preferences, screenshot metadata, and debugging data-source context through EF-backed conversation storage.
+- Automated verification now covers:
+   - onboarding completion and guided message persistence
+   - rejection of pre-onboarding guided messages
+   - new-app and existing-app route persistence and safe route switching
+   - naming preference persistence across later turns and state reload
+   - screenshot debugging context persistence and clarifying guidance when data-source state remains unresolved
+- Manual acceptance review is still required for organizational-policy authority sign-off on SC-003, SC-004, and SC-005 because those criteria depend on human review of bounded behavior rather than only transport-level correctness.
+
 ## Acceptance Review Results Record
 
 Record manual review outcomes here after executing the quickstart evaluation method.

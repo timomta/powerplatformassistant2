@@ -56,6 +56,21 @@
                     </section>
                 }
 
+                @if (_state.Onboarding?.FlowType == "debugging")
+                {
+                    <ScreenshotUploadPanel DataSourceContext="_state.DataSourceContext" OnSaved="HandleDebuggingContextSavedAsync" />
+                    <ScreenshotReviewPanel Screenshots="_state.Screenshots" DataSourceContext="_state.DataSourceContext" />
+                }
+                else
+                {
+                    <NewOrExistingAppFlow
+                        AppContext="_state.AppContext"
+                        EnvironmentContext="_state.EnvironmentContext"
+                        CurrentFlowType="_state.Onboarding?.FlowType"
+                        OnSaved="HandleAuthoringContextSavedAsync" />
+                    <NamingPreferencesPanel NamingPreferences="_state.NamingPreferences" OnSaved="HandleNamingPreferencesSavedAsync" />
+                }
+
                 @if (_state.Turns.Count == 0)
                 {
                     <div class="alert alert-secondary" role="status">
@@ -153,6 +168,51 @@
             var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             _state = await ConversationService.SubmitMessageAsync(authenticationState.User, _request);
             _request = new ChatMessageRequest(string.Empty, null, null, null);
+        }
+        catch (InputGuardException exception)
+        {
+            _errorText = string.Join(" ", exception.Errors.SelectMany(pair => pair.Value));
+        }
+    }
+
+    private async Task HandleAuthoringContextSavedAsync(AuthoringContextRequest request)
+    {
+        _errorText = null;
+
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _state = await ConversationService.UpdateAuthoringContextAsync(authenticationState.User, request);
+        }
+        catch (InputGuardException exception)
+        {
+            _errorText = string.Join(" ", exception.Errors.SelectMany(pair => pair.Value));
+        }
+    }
+
+    private async Task HandleNamingPreferencesSavedAsync(NamingPreferenceUpdateRequest request)
+    {
+        _errorText = null;
+
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _state = await ConversationService.UpdateNamingPreferencesAsync(authenticationState.User, request);
+        }
+        catch (InputGuardException exception)
+        {
+            _errorText = string.Join(" ", exception.Errors.SelectMany(pair => pair.Value));
+        }
+    }
+
+    private async Task HandleDebuggingContextSavedAsync(DebuggingContextRequest request)
+    {
+        _errorText = null;
+
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _state = await ConversationService.UpdateDebuggingContextAsync(authenticationState.User, request);
         }
         catch (InputGuardException exception)
         {

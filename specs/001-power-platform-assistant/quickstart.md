@@ -9,6 +9,18 @@ This document defines the primary end-to-end validation flows for the Power Plat
 - The application is running in a secure server-side environment.
 - The tester is an authenticated organizational user with tenant context available.
 - The assistant is configured with the current constitution, design spec, and system prompt.
+- The current implementation exposes persisted onboarding, authoring-route, naming-preference, and debugging-context behavior through the secured chat UI and HTTP endpoints.
+
+## Build And Test Gate
+
+1. Run `dotnet build PowerPlatformAssistant.sln`.
+2. Run `dotnet test PowerPlatformAssistant.sln`.
+3. Confirm the integration suite covers onboarding persistence, route switching, naming persistence, and screenshot-assisted debugging context.
+
+**Expected Result**
+
+- The solution builds without warnings promoted to errors.
+- The automated suite passes before manual scenario review starts.
 
 ## Scenario 1: First-Session Onboarding
 
@@ -31,27 +43,31 @@ This document defines the primary end-to-end validation flows for the Power Plat
 ## Scenario 2: New-App Versus Existing-App Routing
 
 1. Start a conversation for creating a new app.
-2. Observe environment-aware creation questions.
-3. Restart or branch to an existing-app support request.
-4. Confirm the assistant changes guidance path appropriately.
-5. Mid-conversation, switch from one route to the other.
+2. Save the authoring route with environment type, region, and current goal.
+3. Observe environment-aware creation questions.
+4. Restart or branch to an existing-app support request.
+5. Save the changed route mid-conversation.
+6. Confirm the assistant changes guidance path appropriately.
 
 **Expected Result**
 
 - The new-app path does not leak into debugging or modification guidance.
 - The existing-app path does not return generic creation steps.
 - Route changes are handled safely without losing necessary context.
+- Saved authoring context persists when `/api/chat/state` is reloaded.
 
 ## Scenario 3: Naming Customization
 
-1. Provide custom names for an app, screen, and control.
+1. Provide custom names for an app, screen, control, and variable.
 2. Continue the conversation through at least two additional assistant turns.
 3. Ask the assistant to suggest a naming variant.
+4. Reload the conversation state.
 
 **Expected Result**
 
 - User-provided names are preserved consistently.
 - Suggested names remain editable and non-authoritative.
+- Persisted naming preferences remain visible after state reload.
 
 ## Scenario 4: Tenant-Aware Guidance
 
@@ -67,9 +83,10 @@ This document defines the primary end-to-end validation flows for the Power Plat
 ## Scenario 5: Screenshot-Assisted Debugging
 
 1. Open a debugging conversation for an existing Power Apps issue.
-2. Upload a screenshot showing the visible problem.
+2. Save screenshot metadata, visible issue notes, and data-source context.
 3. Ask for diagnosis help.
 4. Repeat with a screenshot that is insufficient or ambiguous.
+5. Reload the conversation state.
 
 **Expected Result**
 
@@ -77,6 +94,7 @@ This document defines the primary end-to-end validation flows for the Power Plat
 - The assistant grounds its response in visible evidence.
 - The assistant explicitly states when the screenshot is insufficient for certainty.
 - Screenshot handling remains limited to debugging context.
+- Saved screenshot metadata and data-source context persist across state reload.
 
 ## Scenario 6: Data-Source Clarification
 
@@ -164,3 +182,8 @@ Use the following method for the measurable acceptance review tied to SC-003, SC
 - Access-control rules for conversation visibility and screenshot access must be validated against organizational policy.
 - Retention and disposal rules for chat history and screenshots must be validated against organizational policy.
 - Compliance review requirements for troubleshooting artifacts must be validated before production release.
+
+## Current Implementation Evidence
+
+- Automated coverage now verifies onboarding persistence, guided messaging, route switching, naming preference persistence, and screenshot debugging context persistence.
+- Manual acceptance review should still use the fixed-sample method below for SC-003, SC-004, and SC-005 because those criteria require human judgment against the constitution boundary.
