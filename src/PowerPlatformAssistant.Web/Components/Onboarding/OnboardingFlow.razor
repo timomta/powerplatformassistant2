@@ -1,0 +1,66 @@
+<section class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h3 class="h5">Complete Guided Onboarding</h3>
+        <p class="text-muted">Confirm your experience level, the current Power Platform route, and the tenant boundary before assistant guidance starts.</p>
+
+        <EditForm Model="_request" FormName="onboarding-flow" OnValidSubmit="HandleSubmitAsync">
+            <div class="mb-4">
+                <label class="form-label">Experience Level</label>
+                <ExperienceLevelSelector @bind-Value="_request.ExperienceLevel" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="flowType">Guidance Path</label>
+                <InputSelect id="flowType" class="form-select" @bind-Value="_request.FlowType">
+                    <option value="new-app">New app</option>
+                    <option value="existing-app">Existing app</option>
+                    <option value="debugging">Debugging</option>
+                </InputSelect>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="appContext">Current Goal Or App Context</label>
+                <InputText id="appContext" class="form-control" @bind-Value="_request.AppContext" />
+            </div>
+
+            <div class="card border-0 bg-body-tertiary mb-3">
+                <div class="card-body">
+                    <h4 class="h6 text-uppercase text-muted">Detected Tenant Context</h4>
+                    <p class="mb-1"><strong>Tenant:</strong> @TenantContext.TenantId</p>
+                    <p class="mb-0"><strong>Environment:</strong> @TenantContext.EnvironmentId (@TenantContext.EnvironmentType)</p>
+                </div>
+            </div>
+
+            <div class="form-check mb-2">
+                <InputCheckbox id="scopeAck" class="form-check-input" @bind-Value="_request.ScopeAcknowledged" />
+                <label class="form-check-label" for="scopeAck">I understand the assistant is limited to Microsoft Power Platform guidance.</label>
+            </div>
+
+            <div class="form-check mb-4">
+                <InputCheckbox id="tenantAck" class="form-check-input" @bind-Value="_request.TenantContextAcknowledged" />
+                <label class="form-check-label" for="tenantAck">I want guidance constrained to the tenant and environment context shown above.</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Start Guided Session</button>
+        </EditForm>
+    </div>
+</section>
+
+@code {
+    private readonly CompleteOnboardingRequest _request = new()
+    {
+        ExperienceLevel = "beginner",
+        FlowType = "new-app"
+    };
+
+    [Parameter, EditorRequired]
+    public TenantContextSnapshot TenantContext { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public EventCallback<CompleteOnboardingRequest> OnCompleted { get; set; }
+
+    private Task HandleSubmitAsync()
+    {
+        return OnCompleted.InvokeAsync(_request);
+    }
+}

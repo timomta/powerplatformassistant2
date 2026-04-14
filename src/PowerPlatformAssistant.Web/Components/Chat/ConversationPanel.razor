@@ -6,70 +6,143 @@
         <h2 class="h4">Secure Chat Shell</h2>
         <p class="text-muted">All assistant reasoning and session state remain on the server. Messages stay scoped to Microsoft Power Platform guidance.</p>
 
-        @if (_turns.Count == 0)
+        @if (_state is null)
         {
-            <div class="alert alert-secondary" role="status">
-                Start with a Power Apps or broader Microsoft Power Platform question. Tenant-sensitive prompts will trigger a clarifying question instead of an assumption.
-            </div>
+            <div class="alert alert-secondary" role="status">Loading server-side conversation state...</div>
         }
         else
         {
-            foreach (var turn in _turns)
+            <div class="row g-3 mb-4">
+                <div class="col-lg-4">
+                    <div class="card border-0 bg-body-tertiary h-100">
+                        <div class="card-body">
+                            <h3 class="h6 text-uppercase text-muted">Tenant Context</h3>
+                            <p class="mb-1"><strong>Tenant:</strong> @_state.TenantContext.TenantId</p>
+                            <p class="mb-1"><strong>Environment:</strong> @_state.TenantContext.EnvironmentId</p>
+                            <p class="mb-0"><strong>Route:</strong> @(_state.Onboarding?.FlowType ?? "onboarding")</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card border-0 bg-body-tertiary h-100">
+                        <div class="card-body">
+                            <h3 class="h6 text-uppercase text-muted">Session Status</h3>
+                            <p class="mb-1"><strong>Experience:</strong> @(_state.Onboarding?.ExperienceLevel ?? "not set")</p>
+                            <p class="mb-1"><strong>Scope:</strong> @(_state.Onboarding?.ScopeAcknowledged == true ? "confirmed" : "pending")</p>
+                            <p class="mb-0"><strong>Compliance:</strong> @(_state.Governance.RequireComplianceReview ? "review required" : "review optional")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (_state.Onboarding?.IsCompleted != true)
             {
-                if (turn.SenderType == "assistant")
+                <OnboardingFlow TenantContext="_state.TenantContext" OnCompleted="HandleOnboardingCompletedAsync" />
+            }
+            else
+            {
+                @if (_state.ActiveChecklist is not null)
                 {
-                    <AssistantMessage Turn="turn" />
+                    <section class="card border-0 bg-body-tertiary mb-4">
+                        <div class="card-body">
+                            <h3 class="h5">@_state.ActiveChecklist.ChecklistTitle</h3>
+                            <ol class="mb-0">
+                                @foreach (var step in _state.ActiveChecklist.Steps.OrderBy(step => step.StepOrder))
+                                {
+                                    <li>@step.StepText</li>
+                                }
+                            </ol>
+                        </div>
+                    </section>
+                }
+
+                @if (_state.Turns.Count == 0)
+                {
+                    <div class="alert alert-secondary" role="status">
+                        Onboarding is complete. Ask for the next Power Platform step and I will keep the guidance incremental and tenant-aware.
+                    </div>
                 }
                 else
                 {
-                    <article class="card border-0 bg-body-tertiary mb-3">
-                        <div class="card-body">
-                            <strong class="text-uppercase small text-muted d-block mb-2">User</strong>
-                            <p class="mb-0">@turn.MessageText</p>
-                        </div>
-                    </article>
+                    foreach (var turn in _state.Turns)
+                    {
+                        if (turn.SenderType == "assistant" || turn.SenderType == "system")
+                        {
+                            <AssistantMessage Turn="turn" />
+                        }
+                        else
+                        {
+                            <article class="card border-0 bg-body-tertiary mb-3">
+                                <div class="card-body">
+                                    <strong class="text-uppercase small text-muted d-block mb-2">User</strong>
+                                    <p class="mb-0">@turn.MessageText</p>
+                                </div>
+                            </article>
+                        }
+                    }
                 }
+
+                <EditForm Model="_request" FormName="conversation-panel" OnValidSubmit="HandleSubmitAsync">
+                    <div class="mb-3">
+                        <label class="form-label" for="messageText">Message</label>
+                        <InputTextArea id="messageText" class="form-control" @bind-Value="_request.MessageText" />
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label" for="screenshotName">Screenshot File Name</label>
+                            <InputText id="screenshotName" class="form-control" @bind-Value="_request.ScreenshotFileName" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="screenshotType">Screenshot Content Type</label>
+                            <InputText id="screenshotType" class="form-control" @bind-Value="_request.ScreenshotContentType" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="screenshotSize">Screenshot File Size (bytes)</label>
+                            <InputNumber id="screenshotSize" class="form-control" @bind-Value="_request.ScreenshotFileSize" />
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_errorText))
+                    {
+                        <div class="alert alert-danger mt-3" role="alert">@_errorText</div>
+                    }
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <small class="text-muted">Screenshots are optional and treated as untrusted debugging evidence only.</small>
+                        <button class="btn btn-primary" type="submit">Send Guided Question</button>
+                    </div>
+                </EditForm>
             }
         }
-
-        <EditForm Model="_request" FormName="conversation-panel" OnValidSubmit="HandleSubmitAsync">
-            <div class="mb-3">
-                <label class="form-label" for="messageText">Message</label>
-                <InputTextArea id="messageText" class="form-control" @bind-Value="_request.MessageText" />
-            </div>
-
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label" for="screenshotName">Screenshot File Name</label>
-                    <InputText id="screenshotName" class="form-control" @bind-Value="_request.ScreenshotFileName" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="screenshotType">Screenshot Content Type</label>
-                    <InputText id="screenshotType" class="form-control" @bind-Value="_request.ScreenshotContentType" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="screenshotSize">Screenshot File Size (bytes)</label>
-                    <InputNumber id="screenshotSize" class="form-control" @bind-Value="_request.ScreenshotFileSize" />
-                </div>
-            </div>
-
-            @if (!string.IsNullOrWhiteSpace(_errorText))
-            {
-                <div class="alert alert-danger mt-3" role="alert">@_errorText</div>
-            }
-
-            <div class="d-flex justify-content-between align-items-center mt-4">
-                <small class="text-muted">Screenshots are optional and treated as untrusted debugging evidence only.</small>
-                <button class="btn btn-primary" type="submit">Preview Response</button>
-            </div>
-        </EditForm>
     </div>
 </section>
 
 @code {
-    private readonly List<ConversationTurn> _turns = [];
-    private ChatPreviewRequest _request = new(string.Empty, null, null, null);
+    private ChatConversationState? _state;
+    private ChatMessageRequest _request = new(string.Empty, null, null, null);
     private string? _errorText;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _state = await ConversationService.GetStateAsync(authenticationState.User);
+    }
+
+    private async Task HandleOnboardingCompletedAsync(CompleteOnboardingRequest request)
+    {
+        _errorText = null;
+
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _state = await ConversationService.CompleteOnboardingAsync(authenticationState.User, request);
+        }
+        catch (InputGuardException exception)
+        {
+            _errorText = string.Join(" ", exception.Errors.SelectMany(pair => pair.Value));
+        }
+    }
 
     private async Task HandleSubmitAsync()
     {
@@ -78,10 +151,8 @@
         try
         {
             var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var response = await ConversationService.PreviewAsync(authenticationState.User, _request);
-            _turns.Add(response.UserTurn);
-            _turns.Add(response.AssistantTurn);
-            _request = new ChatPreviewRequest(string.Empty, null, null, null);
+            _state = await ConversationService.SubmitMessageAsync(authenticationState.User, _request);
+            _request = new ChatMessageRequest(string.Empty, null, null, null);
         }
         catch (InputGuardException exception)
         {

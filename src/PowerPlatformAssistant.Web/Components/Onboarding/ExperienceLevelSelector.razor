@@ -1,0 +1,29 @@
+<InputRadioGroup @bind-Value="Value">
+    <div class="row g-2" role="radiogroup" aria-label="Experience level">
+        @foreach (var option in Options)
+        {
+            <div class="col-md-4">
+                <label class="card h-100 border-0 shadow-sm p-3">
+                    <InputRadio class="form-check-input me-2" Value="option.Value" />
+                    <span class="fw-semibold d-block">@option.Label</span>
+                    <span class="text-muted small">@option.Description</span>
+                </label>
+            </div>
+        }
+    </div>
+</InputRadioGroup>
+
+@code {
+    private static readonly (string Value, string Label, string Description)[] Options =
+    [
+        ("beginner", "Beginner", "Need confirmable steps and explicit validation points."),
+        ("intermediate", "Intermediate", "Need concise but still bounded guidance."),
+        ("advanced", "Advanced", "Need narrow tenant-aware next-step hypotheses.")
+    ];
+
+    [Parameter]
+    public string Value { get; set; } = "beginner";
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+}
