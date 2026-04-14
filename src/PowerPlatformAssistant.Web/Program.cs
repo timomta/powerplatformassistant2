@@ -34,6 +34,18 @@ if (builder.Environment.IsEnvironment("Testing"))
         {
         });
 }
+else if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = LocalDevelopmentAuthenticationHandler.SchemeName;
+            options.DefaultChallengeScheme = LocalDevelopmentAuthenticationHandler.SchemeName;
+        })
+        .AddScheme<LocalDevelopmentAuthenticationOptions, LocalDevelopmentAuthenticationHandler>(LocalDevelopmentAuthenticationHandler.SchemeName, options =>
+        {
+            builder.Configuration.GetSection(LocalDevelopmentAuthenticationOptions.SectionName).Bind(options);
+        });
+}
 else
 {
     builder.Services.AddAuthentication(options =>
@@ -67,6 +79,7 @@ else
 }
 
 builder.Services.Configure<GovernanceOptions>(builder.Configuration.GetSection(GovernanceOptions.SectionName));
+builder.Services.Configure<LocalDevelopmentAuthenticationOptions>(builder.Configuration.GetSection(LocalDevelopmentAuthenticationOptions.SectionName));
 builder.Services.AddScoped<TenantContextService>();
 builder.Services.AddScoped<TenantContextRefreshService>();
 builder.Services.AddScoped<PromptCompositionService>();

@@ -1,4 +1,6 @@
 ﻿@inherits LayoutComponentBase
+@inject IWebHostEnvironment WebHostEnvironment
+@inject Microsoft.Extensions.Options.IOptions<LocalDevelopmentAuthenticationOptions> LocalDevelopmentAuthentication
 
 <div class="page">
     <div class="sidebar">
@@ -6,6 +8,14 @@
     </div>
 
     <main>
+        @if (WebHostEnvironment.IsDevelopment() && LocalDevelopmentAuthentication.Value.Enabled)
+        {
+            <div class="alert alert-warning border-0 rounded-0 mb-0" role="status">
+                Development mode is using the local auto-sign-in profile for <strong>@LocalDevelopmentAuthentication.Value.DisplayName</strong>
+                in tenant <strong>@LocalDevelopmentAuthentication.Value.TenantId</strong> and environment <strong>@LocalDevelopmentAuthentication.Value.EnvironmentId</strong>.
+            </div>
+        }
+
         <div class="top-row px-4">
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
         </div>

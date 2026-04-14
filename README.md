@@ -5,6 +5,7 @@ Power Platform Assistant is a server-side Blazor application that keeps Microsof
 ## Runtime Shape
 
 - ASP.NET Core Blazor Web App on .NET 10 with interactive server components.
+- Development uses a local authentication profile so localhost testing works without Negotiate setup.
 - Production authentication uses Negotiate.
 - Testing uses a header-based authentication handler so integration coverage can exercise the secured API surface.
 - Conversation state persists through EF Core with SQLite outside testing and in-memory storage during tests.
@@ -22,8 +23,13 @@ Power Platform Assistant is a server-side Blazor application that keeps Microsof
 ```powershell
 dotnet build PowerPlatformAssistant.sln
 dotnet test PowerPlatformAssistant.sln
+dotnet run --project src/PowerPlatformAssistant.Web
 ```
 
 The HTTP surface currently includes `/api/chat/state`, `/api/chat/onboarding`, `/api/chat/messages`, `/api/chat/authoring-context`, `/api/chat/naming-preferences`, and `/api/chat/debugging-context`.
+
+When you run the app locally in the default Development environment, it signs you in automatically using the values in `appsettings.Development.json`. Negotiate remains the active authentication mode outside Development and Testing.
+
+The UI also shows a visible Development banner when the local auto-sign-in profile is active so you do not confuse localhost testing with the production authentication path.
 
 The latest validation run passed 17 tests and recorded onboarding completion at 13.90 ms plus first assistant response latency at 144.19 ms in the test host.
