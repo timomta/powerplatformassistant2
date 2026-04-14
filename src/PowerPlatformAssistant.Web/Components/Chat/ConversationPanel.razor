@@ -1,0 +1,91 @@
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ConversationService ConversationService
+
+<section class="conversation-panel card shadow-sm border-0">
+    <div class="card-body">
+        <h2 class="h4">Secure Chat Shell</h2>
+        <p class="text-muted">All assistant reasoning and session state remain on the server. Messages stay scoped to Microsoft Power Platform guidance.</p>
+
+        @if (_turns.Count == 0)
+        {
+            <div class="alert alert-secondary" role="status">
+                Start with a Power Apps or broader Microsoft Power Platform question. Tenant-sensitive prompts will trigger a clarifying question instead of an assumption.
+            </div>
+        }
+        else
+        {
+            foreach (var turn in _turns)
+            {
+                if (turn.SenderType == "assistant")
+                {
+                    <AssistantMessage Turn="turn" />
+                }
+                else
+                {
+                    <article class="card border-0 bg-body-tertiary mb-3">
+                        <div class="card-body">
+                            <strong class="text-uppercase small text-muted d-block mb-2">User</strong>
+                            <p class="mb-0">@turn.MessageText</p>
+                        </div>
+                    </article>
+                }
+            }
+        }
+
+        <EditForm Model="_request" FormName="conversation-panel" OnValidSubmit="HandleSubmitAsync">
+            <div class="mb-3">
+                <label class="form-label" for="messageText">Message</label>
+                <InputTextArea id="messageText" class="form-control" @bind-Value="_request.MessageText" />
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="screenshotName">Screenshot File Name</label>
+                    <InputText id="screenshotName" class="form-control" @bind-Value="_request.ScreenshotFileName" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="screenshotType">Screenshot Content Type</label>
+                    <InputText id="screenshotType" class="form-control" @bind-Value="_request.ScreenshotContentType" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="screenshotSize">Screenshot File Size (bytes)</label>
+                    <InputNumber id="screenshotSize" class="form-control" @bind-Value="_request.ScreenshotFileSize" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_errorText))
+            {
+                <div class="alert alert-danger mt-3" role="alert">@_errorText</div>
+            }
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <small class="text-muted">Screenshots are optional and treated as untrusted debugging evidence only.</small>
+                <button class="btn btn-primary" type="submit">Preview Response</button>
+            </div>
+        </EditForm>
+    </div>
+</section>
+
+@code {
+    private readonly List<ConversationTurn> _turns = [];
+    private ChatPreviewRequest _request = new(string.Empty, null, null, null);
+    private string? _errorText;
+
+    private async Task HandleSubmitAsync()
+    {
+        _errorText = null;
+
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var response = await ConversationService.PreviewAsync(authenticationState.User, _request);
+            _turns.Add(response.UserTurn);
+            _turns.Add(response.AssistantTurn);
+            _request = new ChatPreviewRequest(string.Empty, null, null, null);
+        }
+        catch (InputGuardException exception)
+        {
+            _errorText = string.Join(" ", exception.Errors.SelectMany(pair => pair.Value));
+        }
+    }
+}

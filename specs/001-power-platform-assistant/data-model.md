@@ -197,6 +197,13 @@ Represents an uploaded screenshot used for debugging context.
 - Screenshot usage is limited to debugging context.
 - Storage, retention, and disposal must follow validated organizational policy before production use.
 
+## Foundational Governance Capture
+
+- The foundational implementation binds access-control, retention, disposal, and compliance behavior from the `Governance` configuration section through `GovernanceOptions`.
+- Initial scaffold behavior keeps conversation access limited to the authenticated tenant session and reserves screenshot access for policy-authorized reviewers only.
+- Initial scaffold retention defaults for chat and screenshot records are `0` days, which marks retention as unset until policy-approved production values are supplied.
+- Compliance review remains enabled by default in the scaffold to avoid assuming a waived review path before the organizational policy authority approves one.
+
 ## Relationships
 
 - One User Session has many Conversations.

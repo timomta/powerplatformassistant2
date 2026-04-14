@@ -39,6 +39,10 @@ Build the first shippable slice of the Power Platform Assistant as a secure Blaz
 - Retention and disposal decision owner: The organizational policy authority defines required retention windows and approved disposal handling for chat history, screenshot files, and related metadata.
 - Compliance review decision owner: The organizational policy authority determines whether troubleshooting artifacts require formal compliance review before production use or broader operational access.
 - Documentation record: The plan and data model capture the implementation-facing decisions, while analysis-summary.md records cross-artifact consistency review and acceptance-evidence results for SC-003 through SC-005.
+- Foundational configuration decision: The application binds governance settings from the `Governance` configuration section through `GovernanceOptions` so non-production startup remains deny-by-default until the organizational policy authority approves production values.
+- Foundational access-control decision: Initial application startup requires an authenticated tenant-user identity for protected assistant routes and keeps conversation preview access limited to the authenticated caller unless broader support access is explicitly approved later.
+- Foundational retention and disposal decision: Initial configuration keeps chat and screenshot retention at `0` days until policy-approved retention windows are supplied, which prevents accidental production retention assumptions in the scaffold.
+- Foundational compliance decision: Compliance review remains required by default in configuration until the organizational policy authority records a narrower approved rule.
 
 ## Project Structure
 

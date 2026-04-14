@@ -1,7 +1,10 @@
 ﻿@page "/"
+@attribute [Authorize]
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Power Platform Assistant</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Power Platform Assistant</h1>
 
-Welcome to your new app.
+<p class="lead">Authenticated, tenant-aware Microsoft Power Platform guidance stays on the server and remains grounded in visible user context.</p>
+
+<ConversationPanel @rendermode="InteractiveServer" />
