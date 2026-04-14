@@ -30,18 +30,36 @@ Build the first shippable slice of the Power Platform Assistant as a secure Blaz
 - Grounded, non-hallucinated chat behavior: PASS. Prompting and review must explicitly prevent unsupported feature claims and invisible-action claims.
 - Accessibility and Section 508 compliance: PASS. Accessibility remains a release invariant and needs explicit validation tasks.
 
+## Governance Decisions
+
+- Repository product-principle authority: The constitution remains the highest local authority for server-side execution, security boundaries, scope limits, grounded assistant behavior, and accessibility expectations.
+- Operational policy authority: The organizational policy authority owns final decisions for conversation access control, screenshot access, retention periods, disposal rules, and compliance review obligations.
+- Access control decision owner: The organizational policy authority approves who can view conversations and who can retrieve uploaded screenshots in authenticated support and review flows.
+- Screenshot access decision owner: The organizational policy authority defines which operational roles may inspect troubleshooting screenshots and under what audit or approval conditions.
+- Retention and disposal decision owner: The organizational policy authority defines required retention windows and approved disposal handling for chat history, screenshot files, and related metadata.
+- Compliance review decision owner: The organizational policy authority determines whether troubleshooting artifacts require formal compliance review before production use or broader operational access.
+- Documentation record: The plan and data model capture the implementation-facing decisions, while analysis-summary.md records cross-artifact consistency review and acceptance-evidence results for SC-003 through SC-005.
+
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
 specs/001-power-platform-assistant/
+├── analysis-summary.md
 ├── data-model.md
 ├── plan.md
 ├── quickstart.md
 ├── spec.md
 └── tasks.md
 ```
+
+- analysis-summary.md: Consistency-review log and acceptance-evidence record for manual evaluation outcomes tied to SC-003, SC-004, and SC-005.
+- data-model.md: Domain entities and governance-relevant data boundaries for sessions, screenshots, tenant context, and naming state.
+- plan.md: Implementation design baseline, constitution alignment, and governance-decision ownership for this feature slice.
+- quickstart.md: Reproducible end-to-end validation flows and manual acceptance-review procedure.
+- spec.md: User requirements, measurable outcomes, and scope boundaries that the downstream artifacts must satisfy.
+- tasks.md: Execution-ordered work items that operationalize the plan and validation requirements.
 
 ### Source Code (repository root)
 

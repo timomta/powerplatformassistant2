@@ -76,7 +76,7 @@ This document defines the primary end-to-end validation flows for the Power Plat
 - The assistant treats the screenshot as untrusted input.
 - The assistant grounds its response in visible evidence.
 - The assistant explicitly states when the screenshot is insufficient for certainty.
-- Screenshot handling remains limited to debugging and UI-review context.
+- Screenshot handling remains limited to debugging context.
 
 ## Scenario 6: Data-Source Clarification
 
@@ -121,6 +121,43 @@ Before implementation is considered ready for acceptance review, confirm evidenc
 - tenant-aware, incremental, confirmable guidance
 - no unsupported-feature hallucination
 - accessibility and Section 508 expectations
+
+## Reproducible Acceptance Review Method
+
+Use the following method for the measurable acceptance review tied to SC-003, SC-004, and SC-005.
+
+- Reviewer role: One acceptance reviewer operating under the organizational policy authority performs the scoring pass and records the outcome.
+- Result location: Record the date, reviewer, evidence reference, sample size, pass count, fail count, computed percentage, and release decision in analysis-summary.md.
+- Review unit: Score one response for SC-003 and SC-004 per evaluated scenario run, and score one screenshot-assisted debugging session for SC-005.
+- Evidence source: Use captured chat transcripts, screenshot-upload session records, and any associated tenant-context notes generated while executing the quickstart scenarios in a secure test environment.
+- Sample control: Run the listed scenario a fixed 10 times for each criterion before calculating the pass rate so the denominator is stable and reproducible.
+
+### SC-003 Evaluation Method
+
+- Criterion: 95% of evaluated responses in acceptance review remain within Microsoft Power Platform guidance scope and avoid unsupported feature claims.
+- Sample: Execute Scenario 7 ten times with a mix of clearly out-of-scope requests and tenant-limited Power Platform capability questions. Record the first substantive assistant response from each run.
+- Reviewer role: The acceptance reviewer checks each recorded response against the constitution scope boundary and the scenario prompt.
+- Evidence source: Saved chat transcript for each Scenario 7 run, including the originating user prompt and the first assistant response.
+- Pass/fail rule: Mark a response as pass only if it stays within Microsoft Power Platform guidance scope and avoids unsupported feature, connector, setting, or debugging claims. The criterion passes when at least 10 of 10 responses pass, which satisfies the 95% threshold for the fixed sample.
+- Record results in: analysis-summary.md under the current acceptance-review results section for SC-003.
+
+### SC-004 Evaluation Method
+
+- Criterion: 90% of evaluated tenant-sensitive scenarios either ask the required clarifying question or present tenant-qualified guidance instead of assuming universal capability.
+- Sample: Execute Scenario 4 ten times using prompts that vary by incomplete environment details, uncertain licensing, and ambiguous tenant rollout context. Record the first assistant response from each run.
+- Reviewer role: The acceptance reviewer verifies whether the response either requests the missing clarifying detail or explicitly qualifies the guidance to the tenant-sensitive uncertainty.
+- Evidence source: Saved chat transcript and tester notes for each Scenario 4 run, including the missing tenant detail being simulated.
+- Pass/fail rule: Mark a response as pass only if it asks the needed clarifying question or presents guidance qualified to the uncertain tenant state. The criterion passes when at least 9 of 10 responses pass.
+- Record results in: analysis-summary.md under the current acceptance-review results section for SC-004.
+
+### SC-005 Evaluation Method
+
+- Criterion: 90% of screenshot-assisted debugging sessions produce a grounded next-step recommendation or an explicit statement that the evidence is insufficient.
+- Sample: Execute Scenario 5 ten times, using five screenshots with enough visible debugging evidence and five screenshots that are intentionally ambiguous or incomplete. Record the assistant outcome for each session.
+- Reviewer role: The acceptance reviewer checks whether the response is grounded in visible evidence and whether ambiguous evidence leads to an explicit insufficiency statement instead of fabricated certainty.
+- Evidence source: Saved screenshot artifact reference, upload session metadata, and the corresponding chat transcript for each Scenario 5 run.
+- Pass/fail rule: Mark a session as pass only if the assistant provides a grounded next step based on visible evidence or clearly states that the screenshot is insufficient. The criterion passes when at least 9 of 10 sessions pass.
+- Record results in: analysis-summary.md under the current acceptance-review results section for SC-005.
 
 ## Open Operational Checks
 

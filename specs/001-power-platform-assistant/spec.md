@@ -79,7 +79,7 @@ An authenticated tenant user is troubleshooting a Power Apps issue, uploads a sc
 - **FR-010**: System MUST remain strictly scoped to Microsoft Power Platform guidance and MUST constrain, redirect, or decline out-of-scope requests.
 - **FR-011**: System MUST support screenshot upload as optional debugging context for Power Apps troubleshooting.
 - **FR-012**: System MUST treat all user inputs, including screenshots, as untrusted.
-- **FR-013**: System MUST use screenshots only as bounded evidence for UI review and debugging guidance and MUST avoid unsupported certainty when screenshot evidence is incomplete.
+- **FR-013**: System MUST use screenshots only as bounded evidence for debugging guidance and MUST avoid unsupported certainty when screenshot evidence is incomplete.
 - **FR-014**: System MUST perform data-source clarification before giving guidance that depends on app data model or connection assumptions.
 - **FR-015**: System MUST NOT hallucinate unsupported Microsoft Power Platform features, behaviors, connectors, settings, or debugging paths.
 - **FR-016**: System MUST preserve accessibility and Section 508 compliance expectations across the chat experience, onboarding flow, and screenshot-assisted debugging flow.
@@ -111,5 +111,5 @@ An authenticated tenant user is troubleshooting a Power Apps issue, uploads a sc
 - Users are authenticated organizational users with tenant context available during the MVP experience.
 - The first shippable slice optimizes for an end-to-end chat MVP rather than a standalone authoring-only or debugging-only tool.
 - The assistant remains specialized to Microsoft Power Platform guidance, with Power Apps authoring and debugging as the initial product focus.
-- Screenshot upload is limited to debugging and UI-review context and is not treated as a general-purpose image-analysis capability.
+- Screenshot upload is limited to debugging context and is not treated as a general-purpose image-analysis capability.
 - Retention periods, compliance obligations, and tenant-specific access policies will be defined by organizational policy outside this specification.

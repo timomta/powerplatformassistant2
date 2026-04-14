@@ -194,7 +194,7 @@ Represents an uploaded screenshot used for debugging context.
 **Rules**
 
 - Screenshot attachments are untrusted inputs.
-- Screenshot usage is limited to debugging and UI-review context.
+- Screenshot usage is limited to debugging context.
 - Storage, retention, and disposal must follow validated organizational policy before production use.
 
 ## Relationships
